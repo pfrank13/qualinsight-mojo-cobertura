@@ -52,6 +52,9 @@ public abstract class AbstractReportMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.basedir}/src/main/java/", required = false)
     private String sourcesPath;
 
+    @Parameter(defaultValue = "${project.basedir}/src/main/java/", required = false)
+    private String[] sourcesPaths;
+
     @Parameter(defaultValue = "UTF-8", required = false)
     private String encoding;
 
@@ -139,6 +142,10 @@ public abstract class AbstractReportMojo extends AbstractMojo {
         return this.sourcesPath;
     }
 
+    protected String[] sourcesPaths(){
+        return this.sourcesPaths;
+    }
+
     protected String encoding() {
         return this.encoding;
     }
@@ -152,13 +159,21 @@ public abstract class AbstractReportMojo extends AbstractMojo {
     Arguments buildCoberturaReportArguments(final File sourcesDirectory, final File destinationDirectory, final File dataFile) {
         getLog().debug("Building Cobertura report generation arguments");
         final ArgumentsBuilder builder = new ArgumentsBuilder();
-        return builder.setBaseDirectory(sourcesDirectory.getAbsolutePath())
+        builder.setBaseDirectory(sourcesDirectory.getAbsolutePath())
             .setDestinationDirectory(destinationDirectory.getAbsolutePath())
             .setDataFile(dataFile.getAbsolutePath())
             .setEncoding(encoding())
-            .calculateMethodComplexity(this.calculateMethodComplexity)
-            .addSources(sourcesPath, true)
-            .build();
+            .calculateMethodComplexity(this.calculateMethodComplexity);
+
+        if(sourcesPaths != null && sourcesPaths.length > 0) {
+            for (String sourcesPath : sourcesPaths) {
+                builder.addSources(sourcesPath, true);
+            }
+        }else{
+            builder.addSources(this.sourcesPath, true);
+        }
+
+        return builder.build();
     }
 
 }
