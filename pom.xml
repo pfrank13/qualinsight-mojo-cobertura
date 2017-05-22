@@ -51,6 +51,7 @@
     <lib.version.maven-plugin-annotations>3.4</lib.version.maven-plugin-annotations>
     <lib.version.commons-io>2.4</lib.version.commons-io>
     <lib.version.maven-project>2.2.1</lib.version.maven-project>
+    <lib.version.jaxb2-maven-plugin>2.3.1</lib.version.jaxb2-maven-plugin>
     <!-- License properties -->
     <license.name>QualInsight-LGPL3</license.name>
     <license.project>qualinsight-mojo-cobertura</license.project>
@@ -95,6 +96,23 @@
     <module>conversion</module>
   </modules>
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>jaxb2-maven-plugin</artifactId>
+          <version>${lib.version.jaxb2-maven-plugin}</version>
+          <executions>
+            <execution>
+              <id>xjc</id>
+              <goals>
+                <goal>xjc</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

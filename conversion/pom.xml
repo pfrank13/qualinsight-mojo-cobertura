@@ -10,4 +10,18 @@
   <packaging>jar</packaging>
   <url>http://www.qualinsight.com/</url>
   <description>Cobertura coverage report conversion to SonarQube generic coverage report format.</description>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>jaxb2-maven-plugin</artifactId>
+        <configuration>
+          <sources>
+            <source>./src/main/resources/com/qualinsight/mojo/cobertura/transformation/sonarqube.xsd</source>
+          </sources>
+          <packageName>com.qualinsight.mojo.sonar.model</packageName>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

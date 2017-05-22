@@ -1,0 +1,29 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="coverage" type="coverageType"/>
+
+  <xs:complexType name="lineToCoverType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:int" name="lineNumber" use="optional"/>
+        <xs:attribute type="xs:string" name="covered" use="optional"/>
+        <xs:attribute type="xs:int" name="branchesToCover" use="optional"/>
+        <xs:attribute type="xs:int" name="coveredBranches" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="fileType">
+    <xs:sequence>
+      <xs:element type="lineToCoverType" name="lineToCover" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="path"/>
+  </xs:complexType>
+
+  <xs:complexType name="coverageType">
+    <xs:sequence>
+      <xs:element type="fileType" name="file"/>
+    </xs:sequence>
+    <xs:attribute type="xs:int" name="version"/>
+  </xs:complexType>
+
+</xs:schema>
