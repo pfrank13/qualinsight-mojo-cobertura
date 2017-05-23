@@ -20,6 +20,8 @@
 package com.qualinsight.mojo.cobertura.core.reporting;
 
 import java.io.File;
+
+import net.sourceforge.cobertura.coveragedata.CoverageDataFileHandler;
 import net.sourceforge.cobertura.dsl.Arguments;
 import net.sourceforge.cobertura.dsl.ArgumentsBuilder;
 import net.sourceforge.cobertura.dsl.Cobertura;
@@ -58,7 +60,7 @@ public class OverallCoverageReportMojo extends AbstractReportMojo {
             prepareFileSystem(overallCoverageDirectory);
             processMerging(buildMergingArguments(utCoverageDataFile, itCoverageDataFile, overallCoverageDirectory, overallCoverageDataFile));
             processReporting(buildCoberturaReportArguments(sourcesDirectory, overallCoverageDirectory, overallCoverageDataFile));
-            convertToSonarQubeReport();
+            convertToSonarQubeReport(CoverageDataFileHandler.loadCoverageData(overallCoverageDataFile));
         } else {
             getLog().info("UT and/or IT coverage data file does not exist, skipping execution.");
         }

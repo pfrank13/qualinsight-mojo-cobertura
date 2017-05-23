@@ -20,9 +20,8 @@
 package com.qualinsight.mojo.cobertura.core.reporting;
 
 import java.io.File;
-import java.io.IOException;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
+
+import net.sourceforge.cobertura.coveragedata.ProjectData;
 import net.sourceforge.cobertura.dsl.Arguments;
 import net.sourceforge.cobertura.dsl.ArgumentsBuilder;
 import net.sourceforge.cobertura.dsl.Cobertura;
@@ -31,8 +30,9 @@ import net.sourceforge.cobertura.reporting.Report;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
-import com.qualinsight.mojo.cobertura.transformation.CoberturaToSonarQubeCoverageReportConversionProcessingException;
-import com.qualinsight.mojo.cobertura.transformation.CoberturaToSonarQubeCoverageReportConverter;
+import com.qualinsight.mojo.cobertura.transformation.CoberturaToSonarQubeReportConverter;
+import com.qualinsight.mojo.cobertura.transformation.JaxbCoberturaToSonarQubeReportConverter;
+import com.qualinsight.mojo.cobertura.transformation.XslCoberturaToSonarQubeReportConverter;
 
 public abstract class AbstractReportMojo extends AbstractMojo {
 
@@ -52,7 +52,7 @@ public abstract class AbstractReportMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.basedir}/src/main/java/", required = false)
     private String sourcesPath;
 
-    @Parameter(defaultValue = "${project.basedir}/src/main/java/", required = false)
+    @Parameter(required = false)
     private String[] sourcesPaths;
 
     @Parameter(defaultValue = "UTF-8", required = false)
@@ -68,6 +68,9 @@ public abstract class AbstractReportMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "false", required = false)
     private boolean calculateMethodComplexity;
+
+    @Parameter(defaultValue = "true", required = false)
+    private final boolean useXslTransform = true;
 
     protected void prepareFileSystem(final File destinationDirectory) throws MojoExecutionException {
         getLog().debug("Preparing Cobertura report generation directories");
@@ -87,50 +90,28 @@ public abstract class AbstractReportMojo extends AbstractMojo {
         }
     }
 
-    protected void convertToSonarQubeReport() throws MojoExecutionException {
+    protected void convertToSonarQubeReport(final ProjectData projectData) throws MojoExecutionException {
         if (this.convertToSonarQubeOutput) {
             boolean foundXmlFormat = false;
             for (final String format : this.formats) {
                 if ("xml".equalsIgnoreCase(format)) {
-                    final File conversionInputFile = new File(coverageReportPath() + COBERTURA_COVERAGE_FILE_NAME);
+                    final CoberturaToSonarQubeReportConverter coberturaToSonarQubeReportConverter;
                     final File conversionOutputFile = new File(coverageReportPath() + CONVERTED_COVERAGE_FILE_NAME);
-                    convertReport(conversionInputFile, conversionOutputFile);
+                    if(useXslTransform()) {
+                        final File conversionInputFile = new File(coverageReportPath() + COBERTURA_COVERAGE_FILE_NAME);
+
+                        coberturaToSonarQubeReportConverter = new XslCoberturaToSonarQubeReportConverter(getLog(), conversionInputFile, conversionOutputFile);
+                    }else{
+                        coberturaToSonarQubeReportConverter = new JaxbCoberturaToSonarQubeReportConverter(getLog(), projectData, conversionOutputFile);
+                    }
+
+                    coberturaToSonarQubeReportConverter.convertReport(_getSourcesPaths(), projectPath);
                     foundXmlFormat = true;
                 }
             }
             if (!foundXmlFormat) {
                 getLog().warn("Conversion to SonarQube generic test coverage format skipped: report format should be 'xml' but was '" + this.formats + "'.");
             }
-        }
-    }
-
-    private void convertReport(final File conversionInputFile, final File conversionOutputFile) throws MojoExecutionException {
-        getLog().debug("Converting Cobertura report to SonarQube generic test coverage report format");
-        try {
-            final String sourceDirectory = this.sourcesPath.substring(this.projectPath.length());
-            if (!sourceDirectory.endsWith(File.separator)) {
-                throw new MojoExecutionException("sourcesPath property must end with '" + File.separator + "' character. Stoping mojo execution.");
-            }
-            getLog().debug("XSLT SRC_DIR variable is set to: " + sourceDirectory);
-            new CoberturaToSonarQubeCoverageReportConverter(sourceDirectory).withInputFile(conversionInputFile)
-                .withOuputFile(conversionOutputFile)
-                .process();
-        } catch (final CoberturaToSonarQubeCoverageReportConversionProcessingException e) {
-            final String message = "An error occurred during coverage output conversion: ";
-            getLog().error(message, e);
-            throw new MojoExecutionException(message, e);
-        } catch (final TransformerConfigurationException e) {
-            final String message = "An error occurred during transformation configuration: ";
-            getLog().error(message, e);
-            throw new MojoExecutionException(message, e);
-        } catch (final ParserConfigurationException e) {
-            final String message = "An error occurred during parser configuration: ";
-            getLog().error(message, e);
-            throw new MojoExecutionException(message, e);
-        } catch (final IOException e) {
-            final String message = "An error occurred while trying to access conversion files: ";
-            getLog().error(message, e);
-            throw new MojoExecutionException(message, e);
         }
     }
 
@@ -154,6 +135,10 @@ public abstract class AbstractReportMojo extends AbstractMojo {
         return this.formats;
     }
 
+    protected boolean useXslTransform(){
+        return this.useXslTransform;
+    }
+
     abstract String coverageReportPath();
 
     Arguments buildCoberturaReportArguments(final File sourcesDirectory, final File destinationDirectory, final File dataFile) {
@@ -165,15 +150,21 @@ public abstract class AbstractReportMojo extends AbstractMojo {
             .setEncoding(encoding())
             .calculateMethodComplexity(this.calculateMethodComplexity);
 
-        if(sourcesPaths != null && sourcesPaths.length > 0) {
-            for (String sourcesPath : sourcesPaths) {
-                builder.addSources(sourcesPath, true);
-            }
-        }else{
-            builder.addSources(this.sourcesPath, true);
+        for(String sourcesPath : _getSourcesPaths()){
+            builder.addSources(sourcesPath, true);
         }
 
         return builder.build();
     }
 
+    String[] _getSourcesPaths(){
+        final String[] _sourcesPaths;
+        if(this.sourcesPaths != null && this.sourcesPaths.length > 0){
+            _sourcesPaths = this.sourcesPaths;
+        }else{
+            _sourcesPaths = new String[]{this.sourcesPath};
+        }
+
+        return _sourcesPaths;
+    }
 }

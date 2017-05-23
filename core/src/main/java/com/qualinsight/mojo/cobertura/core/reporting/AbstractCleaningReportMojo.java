@@ -27,6 +27,8 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import com.qualinsight.mojo.cobertura.core.instrumentation.AbstractInstrumentationMojo;
 
+import net.sourceforge.cobertura.coveragedata.CoverageDataFileHandler;
+
 public abstract class AbstractCleaningReportMojo extends AbstractReportMojo {
 
     @Parameter(defaultValue = "${project.build.directory}/classes/", required = false)
@@ -50,7 +52,7 @@ public abstract class AbstractCleaningReportMojo extends AbstractReportMojo {
             prepareFileSystem(destinationDirectory);
             processReporting(buildCoberturaReportArguments(sourcesDirectory, destinationDirectory, dataFile));
             cleanupFileSystem(classesDirectory, backupDirectory, dataFile, destinationDataFile);
-            convertToSonarQubeReport();
+            convertToSonarQubeReport(CoverageDataFileHandler.loadCoverageData(destinationDataFile));
         } else {
             getLog().info("Directory containing classes does not exist, skipping execution.");
         }
