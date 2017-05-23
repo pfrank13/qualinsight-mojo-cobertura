@@ -70,7 +70,7 @@ public abstract class AbstractReportMojo extends AbstractMojo {
     private boolean calculateMethodComplexity;
 
     @Parameter(defaultValue = "true", required = false)
-    private final boolean useXslTransform = true;
+    private boolean useXslTransform = true;
 
     protected void prepareFileSystem(final File destinationDirectory) throws MojoExecutionException {
         getLog().debug("Preparing Cobertura report generation directories");
