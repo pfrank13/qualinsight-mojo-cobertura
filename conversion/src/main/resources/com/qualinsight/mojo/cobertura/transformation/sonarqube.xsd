@@ -21,9 +21,8 @@
 
   <xs:complexType name="coverageType">
     <xs:sequence>
-      <xs:element type="fileType" name="file"/>
+      <xs:element type="fileType" name="file" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
     <xs:attribute type="xs:int" name="version"/>
   </xs:complexType>
-
 </xs:schema>
