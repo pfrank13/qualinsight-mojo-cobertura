@@ -5,7 +5,7 @@
     <xs:simpleContent>
       <xs:extension base="xs:string">
         <xs:attribute type="xs:int" name="lineNumber" use="optional"/>
-        <xs:attribute type="xs:string" name="covered" use="optional"/>
+        <xs:attribute type="xs:boolean" name="covered" use="optional"/>
         <xs:attribute type="xs:int" name="branchesToCover" use="optional"/>
         <xs:attribute type="xs:int" name="coveredBranches" use="optional"/>
       </xs:extension>

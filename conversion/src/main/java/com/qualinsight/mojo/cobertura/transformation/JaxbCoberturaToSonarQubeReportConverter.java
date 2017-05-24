@@ -26,6 +26,7 @@ import com.qualinsight.mojo.sonar.model.ObjectFactory;
 
 import net.sourceforge.cobertura.coveragedata.ClassData;
 import net.sourceforge.cobertura.coveragedata.CoverageData;
+import net.sourceforge.cobertura.coveragedata.LineData;
 import net.sourceforge.cobertura.coveragedata.ProjectData;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -33,6 +34,8 @@ import org.apache.maven.plugin.logging.Log;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -75,6 +78,12 @@ public class JaxbCoberturaToSonarQubeReportConverter implements CoberturaToSonar
       final String[] sourcesPaths,
       final String projectPath) throws MojoExecutionException {
     try {
+      //There is no real lookup but the project doesn't have Tuple or KeyValuePair
+      final Map<String, String> sonarSourcesPathPrefixMap = new HashMap<String, String>();
+      for(String sourcesPath : sourcesPaths){
+        sonarSourcesPathPrefixMap.put(sourcesPath, sourcesPath.substring(projectPath.length()));
+      }
+
       final Marshaller marshaller = jaxbContext.createMarshaller();
       final ObjectFactory factory = new ObjectFactory();
 
@@ -87,12 +96,20 @@ public class JaxbCoberturaToSonarQubeReportConverter implements CoberturaToSonar
         final FileType fileType = new FileType();
         coverageType.getFile().add(fileType);
 
-        //TODO the sourceFileName against various sourcePaths to create the full path needed by sonar
-        fileType.setPath(classDatum.getSourceFileName());
+        //Important to set this correctly for HTML reports to be able to link to source code files properly
+        fileType.setPath(findPrefix(sonarSourcesPathPrefixMap, classDatum.getSourceFileName()) + classDatum.getSourceFileName());
 
+        LineData lineData;
+        LineToCoverType lineToCoverType;
+        for(CoverageData line : classDatum.getLines()){
+          lineData = (LineData)line;
+          lineToCoverType = new LineToCoverType();
+          fileType.getLineToCover().add(lineToCoverType);
 
-        for(CoverageData coverageData : classDatum.getLines()){
-          //pattern match for the different coverage data types to create the LineToCoverType
+          lineToCoverType.setLineNumber(lineData.getLineNumber());
+          lineToCoverType.setCoveredBranches(lineData.getNumberOfCoveredBranches());
+          lineToCoverType.setBranchesToCover(lineData.getNumberOfValidBranches());
+          lineToCoverType.setCovered(lineData.isCovered());
         }
       }
 
@@ -102,5 +119,32 @@ public class JaxbCoberturaToSonarQubeReportConverter implements CoberturaToSonar
       throw new MojoExecutionException("Marshalling problem", je);
     }
 
+  }
+
+  /**
+   * Find the correct file prefix path for the given sourceFileName, choose the first one if no file exists that matches
+   * the prefixes present in the project
+   *
+   * @param sonarSourcesPathPrefixMap
+   * @param sourceFileName
+   * @return
+   */
+  String findPrefix(final Map<String, String> sonarSourcesPathPrefixMap, final String sourceFileName){
+    String defaultPrefix = null;
+    File fileToCheck;
+    for(Map.Entry<String, String> sonarSourcesPathPrefixEntry : sonarSourcesPathPrefixMap.entrySet()){
+      fileToCheck = new File(sonarSourcesPathPrefixEntry.getKey() + sourceFileName);
+      if(fileToCheck.exists()){
+        return sonarSourcesPathPrefixEntry.getValue();
+      }else {
+        //Should we even bother defaulting?
+        //Default to the first encountered prefix
+        if(defaultPrefix == null){
+          defaultPrefix = sonarSourcesPathPrefixEntry.getValue();
+        }
+      }
+    }
+
+    return defaultPrefix;
   }
 }

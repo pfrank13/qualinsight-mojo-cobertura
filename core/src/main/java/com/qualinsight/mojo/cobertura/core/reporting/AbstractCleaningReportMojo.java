@@ -44,13 +44,12 @@ public abstract class AbstractCleaningReportMojo extends AbstractReportMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         final File dataFile = new File(dataFilePath() + AbstractInstrumentationMojo.DATA_FILE_NAME);
         final File destinationDataFile = new File(coverageReportPath() + AbstractInstrumentationMojo.DATA_FILE_NAME);
-        final File sourcesDirectory = new File(sourcesPath());
         final File destinationDirectory = new File(coverageReportPath());
         final File classesDirectory = new File(this.classesPath);
         final File backupDirectory = new File(this.backupPath);
         if (classesDirectory.exists() && classesDirectory.isDirectory()) {
             prepareFileSystem(destinationDirectory);
-            processReporting(buildCoberturaReportArguments(sourcesDirectory, destinationDirectory, dataFile));
+            processReporting(buildCoberturaReportArguments(destinationDirectory, dataFile));
             cleanupFileSystem(classesDirectory, backupDirectory, dataFile, destinationDataFile);
             convertToSonarQubeReport(CoverageDataFileHandler.loadCoverageData(destinationDataFile));
         } else {

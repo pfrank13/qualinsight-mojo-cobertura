@@ -51,7 +51,6 @@ public class OverallCoverageReportMojo extends AbstractReportMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        final File sourcesDirectory = new File(sourcesPath());
         final File overallCoverageDirectory = new File(coverageReportPath());
         final File utCoverageDataFile = new File(this.utCoverageDataFileLocation);
         final File itCoverageDataFile = new File(this.itCoverageDataFileLocation);
@@ -59,7 +58,7 @@ public class OverallCoverageReportMojo extends AbstractReportMojo {
         if (utCoverageDataFile.exists() && utCoverageDataFile.isFile() && itCoverageDataFile.exists() && itCoverageDataFile.isFile()) {
             prepareFileSystem(overallCoverageDirectory);
             processMerging(buildMergingArguments(utCoverageDataFile, itCoverageDataFile, overallCoverageDirectory, overallCoverageDataFile));
-            processReporting(buildCoberturaReportArguments(sourcesDirectory, overallCoverageDirectory, overallCoverageDataFile));
+            processReporting(buildCoberturaReportArguments(overallCoverageDirectory, overallCoverageDataFile));
             convertToSonarQubeReport(CoverageDataFileHandler.loadCoverageData(overallCoverageDataFile));
         } else {
             getLog().info("UT and/or IT coverage data file does not exist, skipping execution.");

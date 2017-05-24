@@ -29,6 +29,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 
 /**
+ * This was refactored out before supporting multiple sourcesPaths, this will still create an cobertura xml file
+ * but the path needed to associate that data in cobertura will be incorrect
+ *
  * @author pfrank
  */
 public class XslCoberturaToSonarQubeReportConverter implements CoberturaToSonarQubeReportConverter {

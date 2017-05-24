@@ -69,8 +69,9 @@ public abstract class AbstractReportMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", required = false)
     private boolean calculateMethodComplexity;
 
-    @Parameter(defaultValue = "true", required = false)
-    private boolean useXslTransform = true;
+    //TODO remove this before merging, it's just for testing purposes in case
+    @Parameter(defaultValue = "false", required = false)
+    private boolean useXslTransform;
 
     protected void prepareFileSystem(final File destinationDirectory) throws MojoExecutionException {
         getLog().debug("Preparing Cobertura report generation directories");
@@ -141,11 +142,10 @@ public abstract class AbstractReportMojo extends AbstractMojo {
 
     abstract String coverageReportPath();
 
-    Arguments buildCoberturaReportArguments(final File sourcesDirectory, final File destinationDirectory, final File dataFile) {
+    Arguments buildCoberturaReportArguments(final File destinationDirectory, final File dataFile) {
         getLog().debug("Building Cobertura report generation arguments");
         final ArgumentsBuilder builder = new ArgumentsBuilder();
-        builder.setBaseDirectory(sourcesDirectory.getAbsolutePath())
-            .setDestinationDirectory(destinationDirectory.getAbsolutePath())
+        builder.setDestinationDirectory(destinationDirectory.getAbsolutePath())
             .setDataFile(dataFile.getAbsolutePath())
             .setEncoding(encoding())
             .calculateMethodComplexity(this.calculateMethodComplexity);
